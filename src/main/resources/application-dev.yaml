@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  ai:
+    default-provider: ollama
+
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: llama3
+        temperature: 0.7

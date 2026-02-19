@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: aichat
+
+  profiles:
+    active: dev   # default profile (can override via env variable)
+
+logging:
+  level:
+    root: INFO

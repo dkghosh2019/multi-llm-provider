@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: qa
+
+  ai:
+    default-provider: gemini
+
+    gemini:
+      api-key: ${GEMINI_API_KEY}
+      chat:
+        model: gemini-1.5-pro
+        temperature: 0.5

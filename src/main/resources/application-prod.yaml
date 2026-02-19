@@ -1,0 +1,18 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  ai:
+    default-provider: openai
+
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        model: gpt-4o
+        temperature: 0.3
+
+logging:
+  level:
+    root: WARN
+    org.sweetie: INFO
