@@ -2,8 +2,9 @@ package org.sweetie.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.sweetie.dto.ChatRequest;
 import org.sweetie.dto.ChatResponse;
@@ -36,9 +37,14 @@ import org.sweetie.service.ChatService;
  *   Business logic is delegated to {@link ChatService}
  * </p>
  */
+@Validated
 @RestController
 @RequestMapping("/api")
 public class ChatController {
+
+    @Value("${spring.ai.default-provider}")
+    private String defaultProvider;
+
 
     /**
      * Logger instance for structured logging
@@ -72,35 +78,13 @@ public class ChatController {
      * @return {@link ResponseEntity} containing {@link ChatResponse}
      */
     @GetMapping("/chat")
-    public ResponseEntity<?> chatGet(
+    public ResponseEntity<ChatResponse> chatGet(
             @RequestParam String message,
            // @RequestParam (required = false)String llm)
-            @RequestParam (defaultValue = "ollama") String llm){
+           // @RequestParam (defaultValue = "ollama") String llm
+            @RequestParam  String llm)  {
 
-        // validate message input FIRST
-        if(message==null || message.isBlank()){
-            log.warn("Invalid GET request: message is empty");
-            return ResponseEntity
-                    .badRequest()
-                    .body("Message cannot be empty");
-        }
-
-        log.debug("Received GET request with message: {}, llm: {}", message, llm);
-        log.info("Received GET request with message: {}", message);
-
-
-        long timestamp = System.currentTimeMillis();
-
-        try {
-            // Delegate response generation to service layer
-           String  response = chatService.getAiResponse(message, llm);
-           return ResponseEntity.ok(new ChatResponse(response, llm, message, timestamp));
-        } catch (Exception e) {
-            log.error("Error while calling AI model (GET)");
-            return  ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Unable to process request at this time");
-        }
+        return processChat(message, llm);
 
     }
 
@@ -112,7 +96,7 @@ public class ChatController {
      *    <pre>
      *        POST /api/chat
      *        {
-     *            "message"" "Hello",
+     *            "message": "Hello",
      *            "llm": "ollama"
      *        }
      *    </pre>
@@ -124,37 +108,27 @@ public class ChatController {
     @PostMapping("/chat")
     public ResponseEntity<?> chatPost(@RequestBody ChatRequest request){
 
-        String message=request.message();
-        String llm= request.llm();
-
-        // validate message input FIRST
-        if(message==null || message.isBlank()){
-            log.warn("Invalid POST request: message is empty");
-            return ResponseEntity
-                    .badRequest()
-                    .body("Message cannot be empty");
-        }
-        // set default llm value
-        if (llm==null || llm.isBlank())
-            llm="ollama";
-
-        log.debug("Received POST request with message: {}, llm: {}", message, llm);
-        log.info("Received POST request with message: {}", message);
-
-
-        long timestamp = System.currentTimeMillis();
-
-        try {
-            // Delegate response generation to service layer
-            String  response = chatService.getAiResponse(message, llm);
-            return ResponseEntity.ok(new ChatResponse(response, llm, message, timestamp));
-        } catch (Exception e) {
-            log.error("Error while calling AI model (GET)");
-            return  ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Unable to process request at this time");
-        }
+       return processChat(request.message(), request.llm());
 
     }
+
+    private ResponseEntity<ChatResponse> processChat(String message, String llm) {
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("Message cannot be empty");
+        }
+
+        if (llm == null || llm.isBlank()) {
+            log.info("default Provider: {}", defaultProvider);
+            llm = defaultProvider;
+        }
+
+        log.info("Processing chat request. llm={}", llm);
+
+        String response = chatService.getAiResponse(message, llm);
+        long timestamp = System.currentTimeMillis();
+
+        return ResponseEntity.ok(new ChatResponse(response, llm, message, timestamp));
+    }
+
 
 }
