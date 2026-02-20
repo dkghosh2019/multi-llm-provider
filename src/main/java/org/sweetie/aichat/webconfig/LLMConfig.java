@@ -1,4 +1,4 @@
-package org.sweetie.webconfig;
+package org.sweetie.aichat.webconfig;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;

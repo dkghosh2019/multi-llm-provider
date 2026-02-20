@@ -1,4 +1,4 @@
-package org.sweetie.exception;
+package org.sweetie.aichat.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.sweetie.dto.ErrorResponse;
+import org.sweetie.aichat.dto.ErrorResponse;
 
 import java.time.Instant;
 
@@ -27,8 +27,8 @@ import java.time.Instant;
  *     <tr><td>Other Exceptions</td><td>500</td><td>INTERNAL_SERVER_ERROR</td><td>An unexpected error occurred</td></tr>
  * </table>
  *
- * @see org.sweetie.dto.ErrorResponse
- * @see org.sweetie.exception.AIServiceException
+ * @see ErrorResponse
+ * @see AIServiceException
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

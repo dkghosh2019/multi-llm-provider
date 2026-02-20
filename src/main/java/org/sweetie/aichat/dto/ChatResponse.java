@@ -1,4 +1,4 @@
-package org.sweetie.dto;
+package org.sweetie.aichat.dto;
 
 public record ChatResponse (
         String response,

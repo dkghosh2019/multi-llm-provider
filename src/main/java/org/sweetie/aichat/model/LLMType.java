@@ -1,4 +1,4 @@
-package org.sweetie.model;
+package org.sweetie.aichat.model;
 
 public enum LLMType {
     OPENAI("openai"),

@@ -1,4 +1,4 @@
-package org.sweetie.service;
+package org.sweetie.aichat.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +9,9 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.sweetie.dto.ChatResponse;
-import org.sweetie.exception.AIServiceException;
-import org.sweetie.model.LLMType;
+import org.sweetie.aichat.dto.ChatResponse;
+import org.sweetie.aichat.exception.AIServiceException;
+import org.sweetie.aichat.model.LLMType;
 
 import java.util.Map;
 import java.util.Optional;

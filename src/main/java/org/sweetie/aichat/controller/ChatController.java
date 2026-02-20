@@ -1,4 +1,4 @@
-package org.sweetie.controller;
+package org.sweetie.aichat.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.sweetie.dto.ChatRequest;
-import org.sweetie.dto.ChatResponse;
-import org.sweetie.service.ChatService;
+import org.sweetie.aichat.dto.ChatRequest;
+import org.sweetie.aichat.dto.ChatResponse;
+import org.sweetie.aichat.service.ChatService;
 
 /**
  * REST controller for handling chat requests.

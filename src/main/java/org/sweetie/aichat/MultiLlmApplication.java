@@ -1,11 +1,11 @@
-package org.sweetie;
+package org.sweetie.aichat;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MultiLLMsAiApplication {
+public class MultiLlmApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MultiLLMsAiApplication.class, args);
+        SpringApplication.run(MultiLlmApplication.class, args);
     }
 }

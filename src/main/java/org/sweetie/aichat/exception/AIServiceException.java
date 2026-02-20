@@ -1,4 +1,4 @@
-package org.sweetie.exception;
+package org.sweetie.aichat.exception;
 
 public class AIServiceException extends RuntimeException {
 
