@@ -13,8 +13,9 @@ import org.sweetie.dto.ErrorResponse;
 import java.time.Instant;
 
 /**
- * GlobalExceptionHandler provides centralized exception handling across all REST controllers.
- * It maps exceptions to appropriate HTTP status codes and structured JSON responses.
+ * Global exception handler for all REST controllers.
+ *
+ * <p>Maps exceptions to structured JSON responses with appropriate HTTP status codes.</p>
  *
  * <p>Exception Mapping:</p>
  * <table>
@@ -26,78 +27,57 @@ import java.time.Instant;
  *     <tr><td>Other Exceptions</td><td>500</td><td>INTERNAL_SERVER_ERROR</td><td>An unexpected error occurred</td></tr>
  * </table>
  *
- * <p>Example API Response:</p>
- * <pre>
- * {
- *   "status": 503,
- *   "errorCode": "AI_SERVICE_UNAVAILABLE",
- *   "message": "AI service is unavailable",
- *   "timestamp": "2026-02-19T19:01:25.123Z"
- * }
- * </pre>
+ * @see org.sweetie.dto.ErrorResponse
+ * @see org.sweetie.exception.AIServiceException
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // ----------------------------------------
+    // Exception Handlers
+    // ----------------------------------------
+
     /**
      * Handles IllegalArgumentException thrown by controllers or services.
      *
-     * @param ex the thrown IllegalArgumentException
+     * @param ex the exception
      * @return structured ErrorResponse with HTTP 400 status
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         log.error("IllegalArgumentException caught: {}", ex.getMessage(), ex);
-
-        // Construct error response
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "BAD_REQUEST",
-                ex.getMessage(),
-                Instant.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
     }
 
     /**
-     * Generic fallback handler for all uncaught exceptions.
-     * Ensures that unexpected errors return a 500 status with a proper JSON response.
+     * Handles AIServiceException when AI service is unavailable.
      *
-     * @param ex the thrown Exception
-     * @return structured ErrorResponse with HTTP 500 status
+     * @param ex the AIServiceException
+     * @return structured ErrorResponse with HTTP 503 status
      */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error("Unhandled exception caught: {}", ex.getMessage(), ex);
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "INTERNAL_SERVER_ERROR",
-                ex.getMessage(),
-                Instant.now()
+    @ExceptionHandler(AIServiceException.class)
+    public ResponseEntity<ErrorResponse> handleAIServiceException(AIServiceException ex) {
+        log.error("AIServiceException caught: {}", ex.getMessage(), ex);
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ex.getErrorCode(),
+                ex.getMessage()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error);
     }
 
     /**
      * Handles validation errors for @Valid annotated request bodies (POST/PUT requests).
      *
-     * @param ex the MethodArgumentNotValidException containing field errors
+     * @param ex the exception containing field errors
      * @return structured ErrorResponse with HTTP 400 status
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         log.error("Method argument validation failed: {}", ex.getMessage(), ex);
 
-        // Combine all field errors into a single message (taking the first error for simplicity)
+        // Aggregate field errors into a single message (taking first error for simplicity)
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -105,32 +85,14 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("Invalid input");
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "VALIDATION_FAILED",
-                errorMessage,
-                Instant.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", errorMessage);
     }
 
     /**
-     * Handles validation errors for request parameters, path variables, or method arguments
-     * that violate constraints such as @NotBlank, @Min, @Max.
-     * Typically used for GET requests or @Validated controllers.
+     * Handles validation errors for request parameters or path variables violating constraints
+     * such as @NotBlank, @Min, @Max. Typically used in GET requests or @Validated controllers.
      *
-     * <p>Example:</p>
-     * <pre>
-     * @GetMapping("/greet")
-     * public String greet(@RequestParam @NotBlank String name) {
-     *     return "Hello " + name;
-     * }
-     * </pre>
-     *
-     * @param ex the ConstraintViolationException thrown by Jakarta Bean Validation
+     * @param ex the ConstraintViolationException
      * @return structured ErrorResponse with HTTP 400 status
      */
     @ExceptionHandler(ConstraintViolationException.class)
@@ -144,45 +106,41 @@ public class GlobalExceptionHandler {
                 .reduce((s1, s2) -> s1 + "; " + s2)
                 .orElse("Invalid request parameters");
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "CONSTRAINT_VIOLATION",
-                message,
-                Instant.now()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "CONSTRAINT_VIOLATION", message);
     }
 
     /**
-     * Handles AIServiceException thrown when the AI service is unavailable.
-     * Frontend can check the errorCode to provide retry logic.
+     * Generic fallback handler for uncaught exceptions.
+     * Returns 500 Internal Server Error for unexpected issues.
      *
-     * <p>Example Frontend:</p>
-     * <pre>
-     * if (error.errorCode === "AI_SERVICE_UNAVAILABLE") {
-     *     showRetryButton();
-     * }
-     * </pre>
-     *
-     * @param ex the AIServiceException
-     * @return structured ErrorResponse with HTTP 503 status
+     * @param ex the exception
+     * @return structured ErrorResponse with HTTP 500 status
      */
-    @ExceptionHandler(AIServiceException.class)
-    public ResponseEntity<ErrorResponse> handleAIServiceException(AIServiceException ex) {
-        log.error("AIServiceException caught: {}", ex.getMessage(), ex);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        log.error("Unhandled exception caught: {}", ex.getMessage(), ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", ex.getMessage());
+    }
 
+    // ----------------------------------------
+    // Private Helper
+    // ----------------------------------------
+
+    /**
+     * Helper method to build ErrorResponse and ResponseEntity.
+     *
+     * @param status HTTP status code
+     * @param code application-specific error code
+     * @param message human-readable error message
+     * @return ResponseEntity containing structured ErrorResponse
+     */
+    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String code, String message) {
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.SERVICE_UNAVAILABLE.value(),
-                ex.getErrorCode(),
-                ex.getMessage(),
+                status.value(),
+                code,
+                message,
                 Instant.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(error);
+        return ResponseEntity.status(status).body(error);
     }
 }
