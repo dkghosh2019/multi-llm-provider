@@ -1,10 +1,33 @@
+
+server:
+  port: 8100
+
 spring:
   application:
     name: aichat
 
-  profiles:
-    active: dev   # default profile (can override via env variable)
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        model: gpt-4o-mini
 
-logging:
-  level:
-    root: INFO
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+
+    ollama:
+      base-url: http://localhost:11434
+  profiles:
+    active: dev
+
+# ✅ Gemini must NOT be under spring.ai
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
+    url: https://generativelanguage.googleapis.com/v1beta/openai
+    completions:
+      path: /chat/completions
+  model:
+    name: gemini-2.5-flash
+
+
